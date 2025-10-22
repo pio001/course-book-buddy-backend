@@ -17,7 +17,7 @@ const fileFilter = (req, file, cb) => {
   else cb(new Error('Only image files are allowed'), false);
 };
 
-// Memory storage (serverless-friendly)
+// Use memory storage for Cloudinary upload
 const upload = multer({
   storage: multer.memoryStorage(),
   fileFilter,
@@ -25,7 +25,7 @@ const upload = multer({
 });
 
 // Admin/inventory manager only
-router.post('/', auth, upload.single('image'), async (req, res) => {
+router.post('/', auth, upload.single('file'), async (req, res) => {
   try {
     if (req.user.role !== 'admin' && req.user.role !== 'inventory_manager') {
       return res.status(403).json({ msg: 'Not authorized' });
@@ -34,7 +34,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       return res.status(400).json({ msg: 'No file uploaded' });
     }
 
-    const folder = process.env.CLOUDINARY_UPLOAD_FOLDER || 'unibookshop';
+    const folder = process.env.CLOUDINARY_UPLOAD_FOLDER || 'book_covers';
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder, resource_type: 'image' },
       (error, result) => {

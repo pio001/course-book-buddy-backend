@@ -10,7 +10,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Removed local uploads static directory - using Cloudinary for image storage
 
 // No need for prefix on Render - always use /api
 const prefix = '/api';
