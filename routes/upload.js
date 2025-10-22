@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
 const auth = require('../middleware/auth');
+const multer = require('multer');
 const { v2: cloudinary } = require('cloudinary');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 // Configure Cloudinary using env vars
 cloudinary.config({
@@ -11,46 +12,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Only allow image mimetypes
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) cb(null, true);
-  else cb(new Error('Only image files are allowed'), false);
-};
-
-// Use memory storage for Cloudinary upload
-const upload = multer({
-  storage: multer.memoryStorage(),
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: process.env.CLOUDINARY_UPLOAD_FOLDER || 'course-book-buddy',
+    allowed_formats: ['jpg', 'jpeg', 'png'],
+  },
 });
 
-// Admin/inventory manager only
-router.post('/', auth, upload.single('file'), async (req, res) => {
-  try {
-    if (req.user.role !== 'admin' && req.user.role !== 'inventory_manager') {
-      return res.status(403).json({ msg: 'Not authorized' });
-    }
-    if (!req.file) {
-      return res.status(400).json({ msg: 'No file uploaded' });
-    }
+const upload = multer({ storage });
 
-    const folder = process.env.CLOUDINARY_UPLOAD_FOLDER || 'book_covers';
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: 'image' },
-      (error, result) => {
-        if (error) {
-          console.error(error);
-          return res.status(500).json({ msg: 'Upload failed' });
-        }
-        return res.json({ url: result.secure_url, public_id: result.public_id });
-      }
-    );
-
-    uploadStream.end(req.file.buffer);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: 'Upload failed' });
+router.post('/', auth, upload.single('image'), (req, res) => {
+  if (!req.file || !req.file.path) {
+    return res.status(400).json({ error: 'File upload failed' });
   }
+  return res.json({ imageUrl: req.file.path });
 });
 
 // Optional delete endpoint
