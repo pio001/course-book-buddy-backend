@@ -35,6 +35,7 @@ app.use(`${prefix}/cart`, require('./routes/cart'));
 app.use(`${prefix}/wishlist`, require('./routes/wishlist'));
 app.use(`${prefix}/reviews`, require('./routes/reviews'));
 app.use(`${prefix}/upload`, require('./routes/upload'));
+app.use(`${prefix}/paystack`, require('./routes/paystack'));
 
 // Health check endpoint
 app.get(`${prefix}/health`, (req, res) => {

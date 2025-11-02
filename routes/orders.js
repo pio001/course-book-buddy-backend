@@ -141,7 +141,8 @@ router.post('/', auth, async (req, res) => {
       delivery_type,
       delivery_fee,
       payment_method,
-      payment_status: 'pending'
+      payment_status: payment_method === 'paystack' && req.body.payment_status === 'paid' ? 'paid' : 'pending',
+      payment_reference: req.body.payment_reference || null
     });
     
     // Add delivery address if delivery type is 'delivery'
